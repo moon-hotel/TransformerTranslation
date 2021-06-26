@@ -4,7 +4,6 @@ from data_helpers import LoadEnglishGermanDataset, my_tokenizer
 import torch
 
 
-
 def greedy_decode(model, src, max_len, start_symbol, config, data_loader):
     src = src.to(config.device)
     memory = model.encoder(src)  # 对输入的Token序列进行解码翻译
@@ -53,10 +52,12 @@ def translate_german_to_english(src, config):
                                          dim_feedforward=config.dim_feedforward,
                                          dropout=config.dropout)
     translation_model = translation_model.to(config.device)
-    torch.load(config.model_save_dir + '/model.pkl')
+    loaded_paras = torch.load(config.model_save_dir + '/model.pkl')
+    translation_model.load_state_dict(loaded_paras)
 
     r = translate(translation_model, src, data_loader, config)
     return r
+
 
 if __name__ == '__main__':
     srcs = ["Eine Gruppe von Menschen steht vor einem Iglu.",
