@@ -28,7 +28,7 @@ Epoch: 2, Train loss: 5.584, Train acc: 0.242052
 Epoch: 2, Train loss: 5.611, Train acc: 0.243428
 ```
 学习率变化：
-<img src = "imgs/learning_rate.jpg" style="zoom:50%;" >
+<img src = "imgs/learning_rate.jpg" width="500" >
 
 
 ## 2.2 预测（inference）
