@@ -10,7 +10,7 @@ def my_tokenizer(s):
     return s.split()
 
 
-def build_vocab(tokenizer, filepath, specials=None):
+def build_vocab(tokenizer, filepath, min_freq=1, specials=None):
     """
     vocab = Vocab(counter, specials=specials)
 
@@ -28,15 +28,16 @@ def build_vocab(tokenizer, filepath, specials=None):
     with open(filepath, encoding='utf8') as f:
         for string_ in f:
             counter.update(tokenizer(string_))
-    return Vocab(counter, specials=specials)
+    return Vocab(counter, specials=specials, min_freq=min_freq)
 
 
 class LoadEnglishGermanDataset():
-    def __init__(self, train_file_paths=None, tokenizer=None, batch_size=2):
+    def __init__(self, train_file_paths=None, tokenizer=None,
+                 batch_size=2, min_freq=1):
         # 根据训练预料建立英语和德语各自的字典
         self.tokenizer = tokenizer
-        self.de_vocab = build_vocab(self.tokenizer, filepath=train_file_paths[0])
-        self.en_vocab = build_vocab(self.tokenizer, filepath=train_file_paths[1])
+        self.de_vocab = build_vocab(self.tokenizer, filepath=train_file_paths[0],min_freq=min_freq)
+        self.en_vocab = build_vocab(self.tokenizer, filepath=train_file_paths[1],min_freq=min_freq)
         self.specials = ['<unk>', '<pad>', '<bos>', '<eos>']
         self.PAD_IDX = self.de_vocab['<pad>']
         self.BOS_IDX = self.de_vocab['<bos>']

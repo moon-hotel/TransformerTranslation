@@ -43,7 +43,8 @@ def accuracy(logits, y_true, PAD_IDX):
 def train_model(config):
     data_loader = LoadEnglishGermanDataset(config.train_corpus_file_paths,
                                            batch_size=config.batch_size,
-                                           tokenizer=my_tokenizer)
+                                           tokenizer=my_tokenizer,
+                                           min_freq=config.min_freq)
     train_iter, valid_iter, test_iter = \
         data_loader.load_train_val_test_data(config.train_corpus_file_paths,
                                              config.val_corpus_file_paths,
