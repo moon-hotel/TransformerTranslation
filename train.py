@@ -102,7 +102,7 @@ def train_model(config):
             optimizer.step()
             losses += loss.item()
             acc, _, _ = accuracy(logits, tgt_out, data_loader.PAD_IDX)
-            print(f"Epoch: {epoch}, Train loss :{loss.item():.3f}, Train acc: {acc}")
+            print(f"Epoch: {epoch}, Batch[{idx}/{len(train_iter)}], Train loss :{loss.item():.3f}, Train acc: {acc}")
         end_time = time.time()
         train_loss = losses / len(train_iter)
         print(f"Epoch: {epoch}, Train loss: {train_loss:.3f}, Epoch time = {(end_time - start_time):.3f}s")
