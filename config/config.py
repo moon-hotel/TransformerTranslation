@@ -9,7 +9,7 @@ class Config():
 
     def __init__(self):
         #   数据集设置相关配置
-        self.project_dir = os.path.dirname(os.path.abspath(__file__))
+        self.project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.dataset_dir = os.path.join(self.project_dir, 'data')
         self.train_corpus_file_paths = [os.path.join(self.dataset_dir, 'train.de'),  # 训练时编码器的输入
                                         os.path.join(self.dataset_dir, 'train.en')]  # 训练时解码器的输入
@@ -35,9 +35,3 @@ class Config():
         self.model_save_dir = os.path.join(self.project_dir, 'cache')
         if not os.path.exists(self.model_save_dir):
             os.makedirs(self.model_save_dir)
-
-
-if __name__ == '__main__':
-    config = Config()
-    print(config.project_dir)
-    print(config.train_corpus_file_paths)

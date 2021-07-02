@@ -1,6 +1,6 @@
-from config import Config
-from TranslationModel import TranslationModel
-from data_helpers import LoadEnglishGermanDataset, my_tokenizer
+from config.config import Config
+from model.TranslationModel import TranslationModel
+from utils.data_helpers import LoadEnglishGermanDataset, my_tokenizer
 import torch
 
 

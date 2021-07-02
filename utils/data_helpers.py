@@ -36,8 +36,8 @@ class LoadEnglishGermanDataset():
                  batch_size=2, min_freq=1):
         # 根据训练预料建立英语和德语各自的字典
         self.tokenizer = tokenizer
-        self.de_vocab = build_vocab(self.tokenizer, filepath=train_file_paths[0],min_freq=min_freq)
-        self.en_vocab = build_vocab(self.tokenizer, filepath=train_file_paths[1],min_freq=min_freq)
+        self.de_vocab = build_vocab(self.tokenizer, filepath=train_file_paths[0], min_freq=min_freq)
+        self.en_vocab = build_vocab(self.tokenizer, filepath=train_file_paths[1], min_freq=min_freq)
         self.specials = ['<unk>', '<pad>', '<bos>', '<eos>']
         self.PAD_IDX = self.de_vocab['<pad>']
         self.BOS_IDX = self.de_vocab['<bos>']
@@ -119,27 +119,3 @@ class LoadEnglishGermanDataset():
         tgt_padding_mask = (tgt == self.PAD_IDX).transpose(0, 1)
         # 用于mask掉Decoder的Token序列中的padding部分,batch_size, tgt_len
         return src_mask, tgt_mask, src_padding_mask, tgt_padding_mask
-
-
-if __name__ == '__main__':
-    train_filepath = ['data/train_.de',
-                      'data/train_.en']
-
-    data_loader = LoadEnglishGermanDataset(train_filepath, tokenizer=my_tokenizer, batch_size=2)
-    train_iter, valid_iter, test_iter = data_loader.load_train_val_test_data(train_filepath,
-                                                                             train_filepath,
-                                                                             train_filepath)
-    print(data_loader.PAD_IDX)
-    for src, tgt in train_iter:
-        tgt_input = tgt[:-1, :]
-        tgt_out = tgt[1:, :]
-        src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = data_loader.create_mask(src, tgt_input)
-        print("src shape：", src.shape)  # [de_tensor_len,batch_size]
-        print("tgt shape:", tgt.shape)  # [de_tensor_len,batch_size]
-        print("src input shape:", src.shape)
-        print("src_padding_mask shape (batch_size, src_len): ", src_padding_mask.shape)
-        print("tgt input shape:", tgt_input.shape)
-        print("tgt_padding_mask shape: (batch_size, tgt_len) ", tgt_padding_mask.shape)
-        print("tgt output shape:", tgt_out.shape)
-        print("tgt_mask shape (tgt_len,tgt_len): ", tgt_mask.shape)
-        break

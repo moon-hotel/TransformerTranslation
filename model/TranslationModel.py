@@ -1,8 +1,8 @@
 import torch.nn as nn
 import torch
-from MyTransformer import MyTransformer
+from model.MyTransformer import MyTransformer
 from torch.nn import Transformer as MyTransformer
-from Embedding import PositionalEncoding, TokenEmbedding
+from model.Embedding import PositionalEncoding, TokenEmbedding
 
 
 class TranslationModel(nn.Module):
@@ -40,11 +40,11 @@ class TranslationModel(nn.Module):
         tgt_embed = self.pos_embedding(tgt_embed)  # [tgt_len, batch_size, embed_dim]
 
         outs = self.my_transformer(src=src_embed, tgt=tgt_embed, src_mask=src_mask,
-                                   tgt_mask=tgt_mask,memory_mask=memory_mask,
+                                   tgt_mask=tgt_mask, memory_mask=memory_mask,
                                    src_key_padding_mask=src_key_padding_mask,
                                    tgt_key_padding_mask=tgt_key_padding_mask,
                                    memory_key_padding_mask=memory_key_padding_mask)
-                                   # [tgt_len,batch_size,embed_dim]
+        # [tgt_len,batch_size,embed_dim]
         logits = self.classification(outs)  # [tgt_len,batch_size,tgt_vocab_size]
         return logits
 
@@ -60,29 +60,3 @@ class TranslationModel(nn.Module):
         outs = self.my_transformer.decoder(tgt_embed, memory=memory,
                                            tgt_mask=tgt_mask)  # [tgt_len,batch_size,embed_dim]
         return outs
-
-
-if __name__ == '__main__':
-    src_len = 7
-    batch_size = 2
-    dmodel = 32
-    tgt_len = 8
-    num_head = 4
-    src = torch.tensor([[4, 3, 2, 6, 0, 0, 0],
-                        [5, 7, 8, 2, 4, 0, 0]]).transpose(0, 1) # 转换成 [src_len, batch_size]
-    src_key_padding_mask = torch.tensor([[True, True, True, True, False, False, False],
-                                         [True, True, True, True, True, False, False]])
-
-    tgt = torch.tensor([[1, 3, 3, 5, 4, 3, 0, 0],
-                        [1, 6, 8, 2, 9, 1, 0, 0]]).transpose(0, 1)
-    tgt_key_padding_mask = torch.tensor([[True, True, True, True, True, True, False, False],
-                                         [True, True, True, True, True, True, False, False]])
-
-    trans_model = TranslationModel(src_vocab_size=10, tgt_vocab_size=15,
-                                   d_model=dmodel,nhead=num_head,num_encoder_layers=6,
-                                   num_decoder_layers=6, dim_feedforward=30, dropout=0.1)
-    tgt_mask = trans_model.my_transformer.generate_square_subsequent_mask(tgt_len)
-    logits = trans_model(src, tgt=tgt, tgt_mask=tgt_mask, src_key_padding_mask=src_key_padding_mask,
-                         tgt_key_padding_mask=tgt_key_padding_mask,
-                         memory_key_padding_mask=src_key_padding_mask)
-    print(logits.shape)
