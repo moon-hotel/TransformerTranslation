@@ -42,7 +42,8 @@ def translate(model, src, data_loader, config):
 def translate_german_to_english(src, config):
     data_loader = LoadEnglishGermanDataset(config.train_corpus_file_paths,
                                            batch_size=config.batch_size,
-                                           tokenizer=my_tokenizer)
+                                           tokenizer=my_tokenizer,
+                                           min_freq=config.min_freq)
     translation_model = TranslationModel(src_vocab_size=len(data_loader.de_vocab),
                                          tgt_vocab_size=len(data_loader.en_vocab),
                                          d_model=config.d_model,
