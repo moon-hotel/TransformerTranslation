@@ -36,8 +36,8 @@ class PositionalEncoding(nn.Module):
         :param x: [x_len, batch_size, emb_size]
         :return: [x_len, batch_size, emb_size]
         """
-        x = x + self.pe[:x.size(0), :]  # [batch_size, max_len, d_model]
-        return self.dropout(x)
+        x = x + self.pe[:x.size(0), :]  # [src_len,batch_size, d_model] + [src_len, 1, d_model]
+        return self.dropout(x)  # [src_len,batch_size, d_model]
 
 
 class TokenEmbedding(nn.Module):
