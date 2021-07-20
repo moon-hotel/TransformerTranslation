@@ -121,25 +121,26 @@ def train_model(config):
 def evaluate(config, valid_iter, model, data_loader):
     model.eval()
     correct, totals = 0, 0
-    for idx, (src, tgt) in enumerate(valid_iter):
-        src = src.to(config.device)
-        tgt = tgt.to(config.device)
-        tgt_input = tgt[:-1, :]  # 解码部分的输入
+    with torch.no_grad():
+        for idx, (src, tgt) in enumerate(valid_iter):
+            src = src.to(config.device)
+            tgt = tgt.to(config.device)
+            tgt_input = tgt[:-1, :]  # 解码部分的输入
 
-        src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = \
-            data_loader.create_mask(src, tgt_input, device=config.device)
+            src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = \
+                data_loader.create_mask(src, tgt_input, device=config.device)
 
-        logits = model(src=src,  # Encoder的token序列输入，
-                       tgt=tgt_input,  # Decoder的token序列输入
-                       src_mask=src_mask,  # Encoder的注意力Mask输入，这部分其实对于Encoder来说是没有用的
-                       tgt_mask=tgt_mask,  # Decoder的注意力Mask输入，用于掩盖当前position之后的position
-                       src_key_padding_mask=src_padding_mask,  # 用于mask掉Encoder的Token序列中的padding部分
-                       tgt_key_padding_mask=tgt_padding_mask,  # 用于mask掉Decoder的Token序列中的padding部分
-                       memory_key_padding_mask=src_padding_mask)  # 用于mask掉Encoder的Token序列中的padding部分
-        tgt_out = tgt[1:, :]  # 解码部分的真实值  shape: [tgt_len,batch_size]
-        _, c, t = accuracy(logits, tgt_out, data_loader.PAD_IDX)
-        correct += c
-        totals += t
+            logits = model(src=src,  # Encoder的token序列输入，
+                           tgt=tgt_input,  # Decoder的token序列输入
+                           src_mask=src_mask,  # Encoder的注意力Mask输入，这部分其实对于Encoder来说是没有用的
+                           tgt_mask=tgt_mask,  # Decoder的注意力Mask输入，用于掩盖当前position之后的position
+                           src_key_padding_mask=src_padding_mask,  # 用于mask掉Encoder的Token序列中的padding部分
+                           tgt_key_padding_mask=tgt_padding_mask,  # 用于mask掉Decoder的Token序列中的padding部分
+                           memory_key_padding_mask=src_padding_mask)  # 用于mask掉Encoder的Token序列中的padding部分
+            tgt_out = tgt[1:, :]  # 解码部分的真实值  shape: [tgt_len,batch_size]
+            _, c, t = accuracy(logits, tgt_out, data_loader.PAD_IDX)
+            correct += c
+            totals += t
     model.train()
     return float(correct) / totals
 
