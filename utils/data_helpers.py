@@ -115,6 +115,7 @@ class LoadEnglishGermanDataset():
         # Encoder的注意力Mask输入，这部分其实对于Encoder来说是没有用的，所以这里全是0
 
         src_padding_mask = (src == self.PAD_IDX).transpose(0, 1)
+        # False表示not masked, True表示masked
         # 用于mask掉Encoder的Token序列中的padding部分,[batch_size, src_len]
         tgt_padding_mask = (tgt == self.PAD_IDX).transpose(0, 1)
         # 用于mask掉Decoder的Token序列中的padding部分,batch_size, tgt_len
