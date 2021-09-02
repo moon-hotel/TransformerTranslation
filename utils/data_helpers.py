@@ -3,11 +3,14 @@ from torchtext.vocab import Vocab
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
+from torchtext.data.utils import get_tokenizer
 
 
-def my_tokenizer(s):
-    s = s.replace(',', " ,").replace(".", " .")
-    return s.split()
+def my_tokenizer():
+    tokenizer = {}
+    tokenizer['de'] = get_tokenizer('spacy', language='de_core_news_sm')
+    tokenizer['en'] = get_tokenizer('spacy', language='en_core_web_sm')
+    return tokenizer
 
 
 def build_vocab(tokenizer, filepath, min_freq=1, specials=None):
@@ -35,9 +38,9 @@ class LoadEnglishGermanDataset():
     def __init__(self, train_file_paths=None, tokenizer=None,
                  batch_size=2, min_freq=1):
         # 根据训练预料建立英语和德语各自的字典
-        self.tokenizer = tokenizer
-        self.de_vocab = build_vocab(self.tokenizer, filepath=train_file_paths[0], min_freq=min_freq)
-        self.en_vocab = build_vocab(self.tokenizer, filepath=train_file_paths[1], min_freq=min_freq)
+        self.tokenizer = tokenizer()
+        self.de_vocab = build_vocab(self.tokenizer['de'], filepath=train_file_paths[0], min_freq=min_freq)
+        self.en_vocab = build_vocab(self.tokenizer['en'], filepath=train_file_paths[1], min_freq=min_freq)
         self.specials = ['<unk>', '<pad>', '<bos>', '<eos>']
         self.PAD_IDX = self.de_vocab['<pad>']
         self.BOS_IDX = self.de_vocab['<bos>']
@@ -55,9 +58,9 @@ class LoadEnglishGermanDataset():
         data = []
         for (raw_de, raw_en) in zip(raw_de_iter, raw_en_iter):
             de_tensor_ = torch.tensor([self.de_vocab[token] for token in
-                                       self.tokenizer(raw_de.rstrip("\n"))], dtype=torch.long)
+                                       self.tokenizer['de'](raw_de.rstrip("\n"))], dtype=torch.long)
             en_tensor_ = torch.tensor([self.en_vocab[token] for token in
-                                       self.tokenizer(raw_en.rstrip("\n"))], dtype=torch.long)
+                                       self.tokenizer['en'](raw_en.rstrip("\n"))], dtype=torch.long)
             data.append((de_tensor_, en_tensor_))
         # [ (tensor([ 9, 37, 46,  5, 42, 36, 11, 16,  7, 33, 24, 45, 13,  4]), tensor([ 8, 45, 11, 13, 28,  6, 34, 31, 30, 16,  4])),
         #   (tensor([22,  5, 40, 25, 30,  6, 12,  4]), tensor([12, 10,  9, 22, 23,  6, 33,  5, 20, 37, 41,  4])),
