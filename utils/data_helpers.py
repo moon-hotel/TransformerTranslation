@@ -8,8 +8,8 @@ from torchtext.data.utils import get_tokenizer
 
 def my_tokenizer():
     tokenizer = {}
-    tokenizer['de'] = get_tokenizer('spacy', language='de_core_news_sm')
-    tokenizer['en'] = get_tokenizer('spacy', language='en_core_web_sm')
+    tokenizer['de'] = get_tokenizer('spacy', language='de_core_news_sm')  # 德语
+    tokenizer['en'] = get_tokenizer('spacy', language='en_core_web_sm')  # 英语
     return tokenizer
 
 
