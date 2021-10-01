@@ -28,7 +28,7 @@ def greedy_decode(model, src, max_len, start_symbol, config, data_loader):
 def translate(model, src, data_loader, config):
     src_vocab = data_loader.de_vocab
     tgt_vocab = data_loader.en_vocab
-    src_tokenizer = data_loader.tokenizer
+    src_tokenizer = data_loader.tokenizer['de']
     model.eval()
     tokens = [src_vocab.stoi[tok] for tok in src_tokenizer(src)]  # 构造一个样本
     num_tokens = len(tokens)
@@ -39,7 +39,7 @@ def translate(model, src, data_loader, config):
     return " ".join([tgt_vocab.itos[tok] for tok in tgt_tokens]).replace("<bos>", "").replace("<eos>", "")
 
 
-def translate_german_to_english(src, config):
+def translate_german_to_english(srcs, config):
     data_loader = LoadEnglishGermanDataset(config.train_corpus_file_paths,
                                            batch_size=config.batch_size,
                                            tokenizer=my_tokenizer,
@@ -55,9 +55,11 @@ def translate_german_to_english(src, config):
     translation_model = translation_model.to(config.device)
     loaded_paras = torch.load(config.model_save_dir + '/model.pkl')
     translation_model.load_state_dict(loaded_paras)
-
-    r = translate(translation_model, src, data_loader, config)
-    return r
+    results = []
+    for src in srcs:
+        r = translate(translation_model, src, data_loader, config)
+        results.append(r)
+    return results
 
 
 if __name__ == '__main__':
@@ -66,8 +68,9 @@ if __name__ == '__main__':
     tgts = ["A group of people are facing an igloo.",
             "A man in a blue shirt is standing on a ladder cleaning a window."]
     config = Config()
-    for i, src in enumerate(srcs):
-        r = translate_german_to_english(src, config)
+    results = translate_german_to_english(srcs, config)
+    for src, tgt, r in zip(srcs, tgts, results):
         print(f"德语：{src}")
         print(f"翻译：{r}")
-        print(f"英语：{tgts[i]}")
+        print(f"英语：{tgt}")
+        print("\n")
