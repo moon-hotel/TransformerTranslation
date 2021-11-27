@@ -5,6 +5,7 @@ import torch
 import time
 import torch.nn as nn
 import os
+import logging
 
 
 class CustomSchedule(nn.Module):
@@ -41,18 +42,17 @@ def accuracy(logits, y_true, PAD_IDX):
 
 
 def train_model(config):
-    logger = config.logger
-    logger.debug("############载入数据集############")
+    logging.info("############载入数据集############")
     data_loader = LoadEnglishGermanDataset(config.train_corpus_file_paths,
                                            batch_size=config.batch_size,
                                            tokenizer=my_tokenizer,
                                            min_freq=config.min_freq)
-    logger.debug("############划分数据集############")
+    logging.info("############划分数据集############")
     train_iter, valid_iter, test_iter = \
         data_loader.load_train_val_test_data(config.train_corpus_file_paths,
                                              config.val_corpus_file_paths,
                                              config.test_corpus_file_paths)
-    logger.debug("############初始化模型############")
+    logging.info("############初始化模型############")
     translation_model = TranslationModel(src_vocab_size=len(data_loader.de_vocab),
                                          tgt_vocab_size=len(data_loader.en_vocab),
                                          d_model=config.d_model,
@@ -68,7 +68,7 @@ def train_model(config):
     if os.path.exists(model_save_path):
         loaded_paras = torch.load(model_save_path)
         translation_model.load_state_dict(loaded_paras)
-        logger.debug("#### 成功载入已有模型，进行追加训练...")
+        logging.info("#### 成功载入已有模型，进行追加训练...")
     translation_model = translation_model.to(config.device)
     loss_fn = torch.nn.CrossEntropyLoss(ignore_index=data_loader.PAD_IDX)
     learning_rate = CustomSchedule(config.d_model)
@@ -107,14 +107,14 @@ def train_model(config):
             losses += loss.item()
             acc, _, _ = accuracy(logits, tgt_out, data_loader.PAD_IDX)
             msg = f"Epoch: {epoch}, Batch[{idx}/{len(train_iter)}], Train loss :{loss.item():.3f}, Train acc: {acc}"
-            logger.info(msg)
+            logging.info(msg)
         end_time = time.time()
         train_loss = losses / len(train_iter)
         msg = f"Epoch: {epoch}, Train loss: {train_loss:.3f}, Epoch time = {(end_time - start_time):.3f}s"
-        logger.info(msg)
+        logging.info(msg)
         if epoch % 2 == 0:
             acc = evaluate(config, valid_iter, translation_model, data_loader)
-            logger.info(f"Accuracy on validation{acc:.3f}")
+            logging.info(f"Accuracy on validation{acc:.3f}")
             torch.save(translation_model.state_dict(), model_save_path)
 
 

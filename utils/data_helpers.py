@@ -1,9 +1,11 @@
+import logging
 from collections import Counter
 from torchtext.vocab import Vocab
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from torchtext.data.utils import get_tokenizer
+from tqdm import tqdm
 
 
 def my_tokenizer():
@@ -56,7 +58,8 @@ class LoadEnglishGermanDataset():
         raw_de_iter = iter(open(filepaths[0], encoding="utf8"))
         raw_en_iter = iter(open(filepaths[1], encoding="utf8"))
         data = []
-        for (raw_de, raw_en) in zip(raw_de_iter, raw_en_iter):
+        logging.info(f"### 正在将数据集 {filepaths} 转换成 Token ID ")
+        for (raw_de, raw_en) in tqdm(zip(raw_de_iter, raw_en_iter),ncols=80):
             de_tensor_ = torch.tensor([self.de_vocab[token] for token in
                                        self.tokenizer['de'](raw_de.rstrip("\n"))], dtype=torch.long)
             en_tensor_ = torch.tensor([self.en_vocab[token] for token in

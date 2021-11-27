@@ -1,6 +1,6 @@
 import os
 import torch
-from utils.log_helper import Logger
+from utils.log_helper import logger_init
 import logging
 
 class Config():
@@ -37,6 +37,6 @@ class Config():
         if not os.path.exists(self.model_save_dir):
             os.makedirs(self.model_save_dir)
         # 日志相关
-        self.logger = Logger(log_file_name='log_train',
-                             log_level=logging.DEBUG,
-                             log_dir=self.model_save_dir).get_log()
+        logger_init(log_file_name='log_train',
+                    log_level=logging.INFO,
+                    log_dir=self.model_save_dir)
