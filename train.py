@@ -8,18 +8,22 @@ import os
 import logging
 
 
-class CustomSchedule(nn.Module):
-    def __init__(self, d_model, warmup_steps=4000):
+class CustomSchedule(object):
+    def __init__(self, d_model, warmup_steps=4000, optimizer=None):
         super(CustomSchedule, self).__init__()
         self.d_model = torch.tensor(d_model, dtype=torch.float32)
         self.warmup_steps = warmup_steps
-        self.step = 1.
+        self.steps = 1.
+        self.optimizer = optimizer
 
-    def __call__(self):
-        arg1 = self.step ** -0.5
-        arg2 = self.step * (self.warmup_steps ** -1.5)
-        self.step += 1.
-        return (self.d_model ** -0.5) * min(arg1, arg2)
+    def step(self):
+        arg1 = self.steps ** -0.5
+        arg2 = self.steps * (self.warmup_steps ** -1.5)
+        self.steps += 1.
+        lr = (self.d_model ** -0.5) * min(arg1, arg2)
+        for p in self.optimizer.param_groups:
+            p['lr'] = lr
+        return lr
 
 
 def accuracy(logits, y_true, PAD_IDX):
@@ -71,10 +75,11 @@ def train_model(config):
         logging.info("#### 成功载入已有模型，进行追加训练...")
     translation_model = translation_model.to(config.device)
     loss_fn = torch.nn.CrossEntropyLoss(ignore_index=data_loader.PAD_IDX)
-    learning_rate = CustomSchedule(config.d_model)
+
     optimizer = torch.optim.Adam(translation_model.parameters(),
                                  lr=0.,
                                  betas=(config.beta1, config.beta2), eps=config.epsilon)
+    lr_scheduler = CustomSchedule(config.d_model, optimizer=optimizer)
     translation_model.train()
     for epoch in range(config.epochs):
         losses = 0
@@ -100,9 +105,7 @@ def train_model(config):
             loss = loss_fn(logits.reshape(-1, logits.shape[-1]), tgt_out.reshape(-1))
             # [tgt_len*batch_size, tgt_vocab_size] with [tgt_len*batch_size, ]
             loss.backward()
-            lr = learning_rate()
-            for p in optimizer.param_groups:
-                p['lr'] = lr
+            lr_scheduler.step()
             optimizer.step()
             losses += loss.item()
             acc, _, _ = accuracy(logits, tgt_out, data_loader.PAD_IDX)
