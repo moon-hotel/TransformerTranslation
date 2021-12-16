@@ -3,7 +3,6 @@ from model.TranslationModel import TranslationModel
 from utils.data_helpers import LoadEnglishGermanDataset, my_tokenizer
 import torch
 import time
-import torch.nn as nn
 import os
 import logging
 
@@ -65,9 +64,6 @@ def train_model(config):
                                          num_decoder_layers=config.num_decoder_layers,
                                          dim_feedforward=config.dim_feedforward,
                                          dropout=config.dropout)
-    for p in translation_model.parameters():
-        if p.dim() > 1:
-            nn.init.xavier_uniform_(p)
     model_save_path = os.path.join(config.model_save_dir, 'model.pkl')
     if os.path.exists(model_save_path):
         loaded_paras = torch.load(model_save_path)

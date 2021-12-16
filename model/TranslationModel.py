@@ -21,6 +21,7 @@ class TranslationModel(nn.Module):
         self.src_token_embedding = TokenEmbedding(src_vocab_size, d_model)
         self.tgt_token_embedding = TokenEmbedding(tgt_vocab_size, d_model)
         self.classification = nn.Linear(d_model, tgt_vocab_size)
+        self._reset_parameters()
 
     def forward(self, src=None, tgt=None, src_mask=None,
                 tgt_mask=None, memory_mask=None, src_key_padding_mask=None,
@@ -60,3 +61,12 @@ class TranslationModel(nn.Module):
         outs = self.my_transformer.decoder(tgt_embed, memory=memory,
                                            tgt_mask=tgt_mask)  # [tgt_len,batch_size,embed_dim]
         return outs
+
+    def _reset_parameters(self):
+        r"""Initiate parameters in the transformer model."""
+        """
+        初始化
+        """
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
