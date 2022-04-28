@@ -11,9 +11,10 @@ def greedy_decode(model, src, max_len, start_symbol, config, data_loader):
         type(torch.long).to(config.device)  # 解码的第一个输入，起始符号
     for i in range(max_len - 1):
         memory = memory.to(config.device)
-        out = model.decoder(ys, memory)  # [tgt_len,tgt_vocab_size]
-        out = out.transpose(0, 1)  # [tgt_vocab_size, tgt_len]
+        out = model.decoder(ys, memory)  # [tgt_len,1,embed_dim]
+        out = out.transpose(0, 1)  # [1,tgt_len, embed_dim]
         prob = model.classification(out[:, -1])  # 只对对预测的下一个词进行分类
+        # out[:,1] shape : [1,embed_dim],  prob shape:  [1,tgt_vocab_size]
         _, next_word = torch.max(prob, dim=1)  # 选择概率最大者
         next_word = next_word.item()
         ys = torch.cat([ys, torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=0)
