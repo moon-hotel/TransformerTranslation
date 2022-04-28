@@ -55,11 +55,10 @@ class TranslationModel(nn.Module):
         memory = self.my_transformer.encoder(src_embed)
         return memory
 
-    def decoder(self, tgt, memory, tgt_mask):
+    def decoder(self, tgt, memory):
         tgt_embed = self.tgt_token_embedding(tgt)  # [tgt_len, batch_size, embed_dim]
         tgt_embed = self.pos_embedding(tgt_embed)  # [tgt_len, batch_size, embed_dim]
-        outs = self.my_transformer.decoder(tgt_embed, memory=memory,
-                                           tgt_mask=tgt_mask)  # [tgt_len,batch_size,embed_dim]
+        outs = self.my_transformer.decoder(tgt_embed, memory=memory)  # [tgt_len,batch_size,embed_dim]
         return outs
 
     def _reset_parameters(self):

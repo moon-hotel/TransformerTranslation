@@ -11,9 +11,7 @@ def greedy_decode(model, src, max_len, start_symbol, config, data_loader):
         type(torch.long).to(config.device)  # 解码的第一个输入，起始符号
     for i in range(max_len - 1):
         memory = memory.to(config.device)
-        tgt_mask = (model.my_transformer.generate_square_subsequent_mask(ys.size(0))
-                    .type(torch.bool)).to(config.device)  # 根据tgt_len产生一个注意力mask矩阵（对称的）
-        out = model.decoder(ys, memory, tgt_mask)  # [tgt_len,tgt_vocab_size]
+        out = model.decoder(ys, memory)  # [tgt_len,tgt_vocab_size]
         out = out.transpose(0, 1)  # [tgt_vocab_size, tgt_len]
         prob = model.classification(out[:, -1])  # 只对对预测的下一个词进行分类
         _, next_word = torch.max(prob, dim=1)  # 选择概率最大者
