@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from config.config import Config
 from model.TranslationModel import TranslationModel
 from utils.data_helpers import LoadEnglishGermanDataset, my_tokenizer
@@ -114,7 +116,8 @@ def train_model(config):
         if epoch % 2 == 0:
             acc = evaluate(config, valid_iter, translation_model, data_loader)
             logging.info(f"Accuracy on validation{acc:.3f}")
-            torch.save(translation_model.state_dict(), model_save_path)
+            state_dict = deepcopy(translation_model.state_dict())
+            torch.save(state_dict, model_save_path)
 
 
 def evaluate(config, valid_iter, model, data_loader):
