@@ -21,11 +21,14 @@ if __name__ == '__main__':
         tgt_out = tgt[1:, :]
         src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = data_loader.create_mask(src, tgt_input)
         print("src shape：", src.shape)  # [de_tensor_len,batch_size]
+        print(src.transpose(0, 1)[:3])
         print("tgt shape:", tgt.shape)  # [de_tensor_len,batch_size]
         print("src input shape:", src.shape)
         print("src_padding_mask shape (batch_size, src_len): ", src_padding_mask.shape)
-        print("tgt input shape:", tgt_input.shape)
+        print("tgt input shape:", tgt_input.shape) # [tgt_len,batch_size]
+        print(tgt_input.transpose(0,1)[:3])
         print("tgt_padding_mask shape: (batch_size, tgt_len) ", tgt_padding_mask.shape)
-        print("tgt output shape:", tgt_out.shape)
+        print("tgt output shape:", tgt_out.shape) # [tgt_len,batch_size]
+        print(tgt_out.transpose(0,1)[:3])
         print("tgt_mask shape (tgt_len,tgt_len): ", tgt_mask.shape)
         break
