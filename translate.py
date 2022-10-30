@@ -32,9 +32,10 @@ def translate(model, src, data_loader, config):
     tokens = [src_vocab.stoi[tok] for tok in src_tokenizer(src)]  # 构造一个样本
     num_tokens = len(tokens)
     src = (torch.LongTensor(tokens).reshape(num_tokens, 1))  # 将src_len 作为第一个维度
-    tgt_tokens = greedy_decode(model, src, max_len=num_tokens + 5,
-                               start_symbol=data_loader.BOS_IDX, config=config,
-                               data_loader=data_loader).flatten()  # 解码的预测结果
+    with torch.no_grad():
+        tgt_tokens = greedy_decode(model, src, max_len=num_tokens + 5,
+                                   start_symbol=data_loader.BOS_IDX, config=config,
+                                   data_loader=data_loader).flatten()  # 解码的预测结果
     return " ".join([tgt_vocab.itos[tok] for tok in tgt_tokens]).replace("<bos>", "").replace("<eos>", "")
 
 
