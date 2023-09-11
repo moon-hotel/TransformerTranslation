@@ -28,7 +28,7 @@ class PositionalEncoding(nn.Module):
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))  # [d_model/2]
         pe[:, 0::2] = torch.sin(position * div_term)  # [max_len, d_model/2]
         pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0).transpose(0, 1)  # [max_len, 1, d_model]
+        pe = pe.unsqueeze(1)
         self.register_buffer('pe', pe)
 
     def forward(self, x):  # [x_len, batch_size, d_model]
@@ -52,4 +52,4 @@ class TokenEmbedding(nn.Module):
         """
 
     def forward(self, tokens):
-        return self.embedding(tokens.long()) * math.sqrt(self.emb_size)
+        return self.embedding(tokens) * math.sqrt(self.emb_size)

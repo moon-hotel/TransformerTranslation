@@ -97,7 +97,7 @@ class MyTransformerEncoderLayer(nn.Module):
         self.linear1 = nn.Linear(d_model, dim_feedforward)
         self.dropout = nn.Dropout(dropout)
         self.linear2 = nn.Linear(dim_feedforward, d_model)
-        self.activation = F.relu
+        self.activation = nn.ReLU()
 
         self.dropout2 = nn.Dropout(dropout)
         self.norm2 = nn.LayerNorm(d_model)
@@ -105,8 +105,9 @@ class MyTransformerEncoderLayer(nn.Module):
     def forward(self, src, src_mask=None, src_key_padding_mask=None):
         """
         :param src: 编码部分的输入，形状为 [src_len,batch_size, embed_dim]
-        :param src_mask:  编码部分输入的padding情况，形状为 [batch_size, src_len]
-        :return:
+        :param src_mask:  None
+        :param src_key_padding_mask:  编码部分输入的padding情况，形状为 [batch_size, src_len]
+        :return
         """
         src2 = self.self_attn(src, src, src, attn_mask=src_mask,
                               key_padding_mask=src_key_padding_mask, )[0]  # 计算多头注意力
@@ -179,7 +180,7 @@ class MyTransformerDecoderLayer(nn.Module):
         self.dropout2 = nn.Dropout(dropout)
         self.dropout3 = nn.Dropout(dropout)
 
-        self.activation = F.relu
+        self.activation = nn.ReLU()
 
     def forward(self, tgt, memory, tgt_mask=None, memory_mask=None, tgt_key_padding_mask=None,
                 memory_key_padding_mask=None):
