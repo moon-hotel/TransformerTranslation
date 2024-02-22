@@ -6,7 +6,13 @@ import torch.nn.functional as F
 from torch.nn import Parameter
 from torch.nn.init import xavier_uniform_
 
+from .Attention import MyMultiheadAttention
+
 is_print_shape = True
+
+
+def _get_clones(module, N):
+    return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
 
 
 class MyTransformer(nn.Module):
@@ -162,10 +168,6 @@ class MyTransformerEncoder(nn.Module):
             output = self.norm(output)
         # [src_len, batch_size, num_heads * kdim] <==> [src_len,batch_size,embed_dim]
         return output
-
-
-def _get_clones(module, N):
-    return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
 
 
 class MyTransformerDecoderLayer(nn.Module):

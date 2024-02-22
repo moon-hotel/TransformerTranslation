@@ -6,11 +6,14 @@
 
 
 ## 1. 环境准备
-* Python==3.x
-* PyTorch==1.5.0
-* torchtext==0.6.0
-* pip install de_core_news_sm-3.0.0.tar.gz
-* pip install en_core_web_sm-3.0.0.tar.gz
+* Python==3.12.2
+* PyTorch==2.2.0
+* torchtext==0.16.2
+
+spacy model:
+de_core_news_sm 3.7.0
+en-core-web-sm 3.7.1
+
 
 ## 2. 使用方法
 * STEP 1. 直接下载或克隆本项目：https://github.com/moon-hotel/TransformerTranslation
