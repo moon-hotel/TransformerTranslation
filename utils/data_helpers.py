@@ -1,10 +1,11 @@
 import logging
 from collections import Counter
-from torchtext.vocab import Vocab
+
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from torchtext.data.utils import get_tokenizer
+from torchtext.vocab import build_vocab_from_iterator
 from tqdm import tqdm
 
 
@@ -17,23 +18,28 @@ def my_tokenizer():
 
 def build_vocab(tokenizer, filepath, min_freq=1, specials=None):
     """
-    vocab = Vocab(counter, specials=specials)
-
-    print(vocab.itos)  # 得到一个列表，返回词表中的每一个词；
+    print(vocab_obj.get_itos())  # 得到一个列表，返回词表中的每一个词；
     # ['<unk>', '<pad>', '<bos>', '<eos>', '.', 'a', 'are', 'A', 'Two', 'in', 'men',...]
-    print(vocab.itos[2])  # 通过索引返回得到词表中对应的词；
+    print(vocab_obj.lookup_token(0))  # 通过索引返回得到词表中对应的词；
 
-    print(vocab.stoi)  # 得到一个字典，返回词表中每个词的索引；
+    print(list(vocab_obj.get_stoi().items())[:10])  # 得到一个字典，返回词表中每个词的索引；
     # {'<unk>': 0, '<pad>': 1, '<bos>': 2, '<eos>': 3, '.': 4, 'a': 5, 'are': 6,...}
-    print(vocab.stoi['are'])  # 通过单词返回得到词表中对应的索引
+    print(vocab_obj['are'])  # 通过单词返回得到词表中对应的索引
     """
     if specials is None:
         specials = ['<unk>', '<pad>', '<bos>', '<eos>']
-    counter = Counter()
-    with open(filepath, encoding='utf8') as f:
-        for string_ in f:
-            counter.update(tokenizer(string_))
-    return Vocab(counter, specials=specials, min_freq=min_freq)
+
+    def yield_tokens(filepath):
+        with open(filepath, encoding='utf8') as f:
+            for string_ in f:
+                yield tokenizer(string_)
+
+    vocab_obj = build_vocab_from_iterator(yield_tokens(
+        filepath), specials=specials, min_freq=min_freq)
+
+    vocab_obj.set_default_index(vocab_obj['<unk>'])
+
+    return vocab_obj
 
 
 class LoadEnglishGermanDataset():
@@ -41,8 +47,10 @@ class LoadEnglishGermanDataset():
                  batch_size=2, min_freq=1):
         # 根据训练预料建立英语和德语各自的字典
         self.tokenizer = tokenizer()
-        self.de_vocab = build_vocab(self.tokenizer['de'], filepath=train_file_paths[0], min_freq=min_freq)
-        self.en_vocab = build_vocab(self.tokenizer['en'], filepath=train_file_paths[1], min_freq=min_freq)
+        self.de_vocab = build_vocab(
+            self.tokenizer['de'], filepath=train_file_paths[0], min_freq=min_freq)
+        self.en_vocab = build_vocab(
+            self.tokenizer['en'], filepath=train_file_paths[1], min_freq=min_freq)
         self.specials = ['<unk>', '<pad>', '<bos>', '<eos>']
         self.PAD_IDX = self.de_vocab['<pad>']
         self.BOS_IDX = self.de_vocab['<bos>']
@@ -59,7 +67,7 @@ class LoadEnglishGermanDataset():
         raw_en_iter = iter(open(filepaths[1], encoding="utf8"))
         data = []
         logging.info(f"### 正在将数据集 {filepaths} 转换成 Token ID ")
-        for (raw_de, raw_en) in tqdm(zip(raw_de_iter, raw_en_iter),ncols=80):
+        for (raw_de, raw_en) in tqdm(zip(raw_de_iter, raw_en_iter), ncols=80):
             de_tensor_ = torch.tensor([self.de_vocab[token] for token in
                                        self.tokenizer['de'](raw_de.rstrip("\n"))], dtype=torch.long)
             en_tensor_ = torch.tensor([self.en_vocab[token] for token in
@@ -98,26 +106,33 @@ class LoadEnglishGermanDataset():
         for (de_item, en_item) in data_batch:  # 开始对一个batch中的每一个样本进行处理。
             de_batch.append(de_item)  # 编码器输入序列不需要加起止符
             # 在每个idx序列的首位加上 起始token 和 结束 token
-            en = torch.cat([torch.tensor([self.BOS_IDX]), en_item, torch.tensor([self.EOS_IDX])], dim=0)
+            en = torch.cat([torch.tensor([self.BOS_IDX]), en_item,
+                           torch.tensor([self.EOS_IDX])], dim=0)
             en_batch.append(en)
         # 以最长的序列为标准进行填充
-        de_batch = pad_sequence(de_batch, padding_value=self.PAD_IDX)  # [de_len,batch_size]
-        en_batch = pad_sequence(en_batch, padding_value=self.PAD_IDX)  # [en_len,batch_size]
+        # [de_len,batch_size]
+        de_batch = pad_sequence(de_batch, padding_value=self.PAD_IDX)
+        # [en_len,batch_size]
+        en_batch = pad_sequence(en_batch, padding_value=self.PAD_IDX)
         return de_batch, en_batch
 
     def generate_square_subsequent_mask(self, sz, device):
-        mask = (torch.triu(torch.ones((sz, sz), device=device)) == 1).transpose(0, 1)
-        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        mask = (torch.triu(torch.ones((sz, sz), device=device))
+                == 1).transpose(0, 1)
+        mask = mask.float().masked_fill(mask == 0, float(
+            '-inf')).masked_fill(mask == 1, float(0.0))
         return mask
 
     def create_mask(self, src, tgt, device='cpu'):
         src_seq_len = src.shape[0]
         tgt_seq_len = tgt.shape[0]
 
-        tgt_mask = self.generate_square_subsequent_mask(tgt_seq_len, device)  # [tgt_len,tgt_len]
+        tgt_mask = self.generate_square_subsequent_mask(
+            tgt_seq_len, device)  # [tgt_len,tgt_len]
         # Decoder的注意力Mask输入，用于掩盖当前position之后的position，所以这里是一个对称矩阵
 
-        src_mask = torch.zeros((src_seq_len, src_seq_len), device=device).type(torch.bool)
+        src_mask = torch.zeros((src_seq_len, src_seq_len),
+                               device=device).type(torch.bool)
         # Encoder的注意力Mask输入，这部分其实对于Encoder来说是没有用的，所以这里全是0
 
         src_padding_mask = (src == self.PAD_IDX).transpose(0, 1)
