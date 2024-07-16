@@ -377,7 +377,9 @@ def multi_head_attention_forward(query,  # [tgt_len,batch_size, embed_dim]
         # 现在 atten_mask 的维度就变成了3D
 
     q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
-    # [batch_size * num_heads,tgt_len,kdim]
+    # 是一个重要的方法，它用于确保张量在内存中的存储是连续的。这对于某些操作和优化来说是必要的，
+    # 因为有些操作（例如视图操作）需要张量的数据在内存中是连续的。以下是contiguous的主要用途和工作原理：
+    # [tgt_len,batch_size,kdim * num_heads] ==>  [batch_size * num_heads,tgt_len, kdim]
     # 因为前面是num_heads个头一起参与的计算，所以这里要进行一下变形，以便于后面计算。 且同时交换了0，1两个维度
     k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)  # [batch_size * num_heads,src_len,kdim]
     v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)  # [batch_size * num_heads,src_len,vdim]
@@ -415,6 +417,7 @@ def multi_head_attention_forward(query,  # [tgt_len,batch_size, embed_dim]
     # 这里就是多个z  线性组合成Z  [tgt_len,batch_size,embed_dim]
     if is_print_shape:
         print(f"\t 多头注意力中,多头计算结束后的形状（堆叠）为([tgt_len,batch_size,num_heads*kdim]){attn_output.shape}")
-        print(f"\t 多头计算结束后，再进行线性变换时的权重W_o的形状为([num_heads*vdim, num_heads*vdim  ]){out_proj.weight.shape}")
+        print(
+            f"\t 多头计算结束后，再进行线性变换时的权重W_o的形状为([num_heads*vdim, num_heads*vdim  ]){out_proj.weight.shape}")
         print(f"\t 多头线性变化后的形状为([tgt_len,batch_size,embed_dim]) {Z.shape}")
     return Z, attn_output_weights.sum(dim=1) / num_heads  # average attention weights over heads
