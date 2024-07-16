@@ -5,7 +5,8 @@ from model.Embedding import TokenEmbedding, PositionalEncoding
 import torch
 
 if __name__ == '__main__':
-    x = torch.tensor([[1, 3, 5, 7, 9], [2, 4, 6, 8, 10]], dtype=torch.long)
+    x = torch.tensor([[1, 3, 5, 7, 9],
+                      [2, 4, 6, 8, 10]], dtype=torch.long)
     x = x.transpose(0, 1)  # [src_len, batch_size]
     print(f"input shape [src_len,batch_size]: ", x.shape)
     token_embedding = TokenEmbedding(vocab_size=11, emb_size=512)
