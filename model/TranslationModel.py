@@ -53,7 +53,7 @@ class TranslationModel(nn.Module):
         src_embed = self.src_token_embedding(src)  # [src_len, batch_size, embed_dim]
         src_embed = self.pos_embedding(src_embed)  # [src_len, batch_size, embed_dim]
         memory = self.my_transformer.encoder(src_embed)
-        return memory
+        return memory # [src_len, batch_size, embed_dim]
 
     def decoder(self, tgt, memory):
         tgt_embed = self.tgt_token_embedding(tgt)  # [tgt_len, batch_size, embed_dim]

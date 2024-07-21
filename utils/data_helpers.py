@@ -80,9 +80,9 @@ class LoadEnglishGermanDataset():
         train_iter = DataLoader(train_data, batch_size=self.batch_size,
                                 shuffle=True, collate_fn=self.generate_batch)
         valid_iter = DataLoader(val_data, batch_size=self.batch_size,
-                                shuffle=True, collate_fn=self.generate_batch)
+                                shuffle=False, collate_fn=self.generate_batch)
         test_iter = DataLoader(test_data, batch_size=self.batch_size,
-                               shuffle=True, collate_fn=self.generate_batch)
+                               shuffle=False, collate_fn=self.generate_batch)
         return train_iter, valid_iter, test_iter
 
     def generate_batch(self, data_batch):

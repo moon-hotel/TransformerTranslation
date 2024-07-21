@@ -6,14 +6,14 @@ import torch
 
 def greedy_decode(model, src, max_len, start_symbol, config, data_loader):
     src = src.to(config.device)
-    memory = model.encoder(src)  # 对输入的Token序列进行解码翻译
+    memory = model.encoder(src)  # 对输入的Token序列进行编码得到memory
     ys = torch.ones(1, 1).fill_(start_symbol). \
         type(torch.long).to(config.device)  # 解码的第一个输入，起始符号
-    for i in range(max_len - 1):
+    for i in range(max_len - 1):  # 逐时刻进行解码
         memory = memory.to(config.device)
         out = model.decoder(ys, memory)  # [tgt_len,1,embed_dim]
         out = out.transpose(0, 1)  # [1,tgt_len, embed_dim]
-        prob = model.classification(out[:, -1])  # 只对对预测的下一个词进行分类
+        prob = model.classification(out[:, -1])  # 只对预测的下一个词进行分类，即最后一个时刻
         # out[:,1] shape : [1,embed_dim],  prob shape:  [1,tgt_vocab_size]
         _, next_word = torch.max(prob, dim=1)  # 选择概率最大者
         next_word = next_word.item()

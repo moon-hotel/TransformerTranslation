@@ -66,14 +66,16 @@ class MyTransformer(nn.Module):
         output = self.decoder(tgt=tgt, memory=memory, tgt_mask=tgt_mask, memory_mask=memory_mask,
                               tgt_key_padding_mask=tgt_key_padding_mask,
                               memory_key_padding_mask=memory_key_padding_mask)
-        return output  # [tgt_len, batch_size, num_heads * kdim] <==> [tgt_len,batch_size,embed_dim]
+        return output  # [tgt_len, batch_size, num_heads * kdim] <==> [tgt_len, batch_size, embed_dim]
 
     def generate_square_subsequent_mask(self, sz):
         r"""Generate a square mask for the sequence. The masked positions are filled with float('-inf').
             Unmasked positions are filled with float(0.0).
         """
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+        # torch.triu(torch.ones(sz, sz)) 上三角矩阵，转置变成下三角
         mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        # 将 0 的部分 替换为 -inf， 1 的部分替换为 0
         return mask  # [sz,sz]
 
 
@@ -104,14 +106,14 @@ class MyTransformerEncoderLayer(nn.Module):
 
     def forward(self, src, src_mask=None, src_key_padding_mask=None):
         """
-        :param src: 编码部分的输入，形状为 [src_len,batch_size, embed_dim]
+        :param src: 编码部分的输入，形状为 [src_len, batch_size, embed_dim]
         :param src_mask:  None
         :param src_key_padding_mask:  编码部分输入的padding情况，形状为 [batch_size, src_len]
         :return
         """
         src2 = self.self_attn(src, src, src, attn_mask=src_mask,
                               key_padding_mask=src_key_padding_mask, )[0]  # 计算多头注意力
-        # src2: [src_len,batch_size,num_heads*kdim] num_heads*kdim = embed_dim
+        # src2: [src_len, batch_size, num_heads*kdim] num_heads*kdim = embed_dim
         src = src + self.dropout1(src2)  # 残差连接
         src = self.norm1(src)  # [src_len,batch_size,num_heads*kdim]
 
@@ -332,7 +334,7 @@ def multi_head_attention_forward(query,  # [tgt_len,batch_size, embed_dim]
                                  attn_mask=None,  # [tgt_len,src_len] or [num_heads*batch_size,tgt_len, src_len]
                                  ):
     q = q_proj(query)
-    #  [tgt_len,batch_size, embed_dim] x [embed_dim,kdim * num_heads] = [tgt_len,batch_size,kdim * num_heads]
+    #  [tgt_len, batch_size, embed_dim] x [embed_dim, kdim * num_heads] = [tgt_len,batch_size,kdim * num_heads]
 
     k = k_proj(key)
     # [src_len, batch_size, embed_dim] x [embed_dim, kdim * num_heads] = [src_len, batch_size, kdim * num_heads]
@@ -358,7 +360,8 @@ def multi_head_attention_forward(query,  # [tgt_len,batch_size, embed_dim]
         print(f"\t  W_v 的shape([embed_dim,vdim * num_heads]):{v_proj.weight.shape}")
         print(f"\t   V  的shape([src_len,batch_size,vdim * num_heads]):{v.shape}")
         print("\t" + "-" * 70)
-        print("\t ***** 注意，这里的W_q, W_k, W_v是多个head同时进行计算的. 因此，Q,K,V分别也是包含了多个head的q,k,v堆叠起来的结果 *****")
+        print(
+            "\t ***** 注意，这里的W_q, W_k, W_v是多个head同时进行计算的. 因此，Q,K,V分别也是包含了多个head的q,k,v堆叠起来的结果 *****")
 
     tgt_len, bsz, embed_dim = query.size()  # [tgt_len,batch_size, embed_dim]
     src_len = key.size(0)
@@ -377,12 +380,12 @@ def multi_head_attention_forward(query,  # [tgt_len,batch_size, embed_dim]
         # 现在 atten_mask 的维度就变成了3D
 
     q = q.contiguous().view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
-    # 是一个重要的方法，它用于确保张量在内存中的存储是连续的。这对于某些操作和优化来说是必要的，
-    # 因为有些操作（例如视图操作）需要张量的数据在内存中是连续的。以下是contiguous的主要用途和工作原理：
-    # [tgt_len,batch_size,kdim * num_heads] ==>  [batch_size * num_heads,tgt_len, kdim]
+    # contiguous()它用于确保张量在内存中的存储是连续的。这对于某些操作和优化来说是必要的，
+    # 因为有些操作（例如视图操作）需要张量的数据在内存中是连续的。
+    # [tgt_len,batch_size,kdim * num_heads] ==>  [batch_size * num_heads, tgt_len, kdim]
     # 因为前面是num_heads个头一起参与的计算，所以这里要进行一下变形，以便于后面计算。 且同时交换了0，1两个维度
-    k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)  # [batch_size * num_heads,src_len,kdim]
-    v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)  # [batch_size * num_heads,src_len,vdim]
+    k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)  # [batch_size * num_heads, src_len,kdim]
+    v = v.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)  # [batch_size * num_heads, src_len,vdim]
     attn_output_weights = torch.bmm(q, k.transpose(1, 2))
     # [batch_size * num_heads,tgt_len,kdim] x [batch_size * num_heads, kdim, src_len]
     # =  [batch_size * num_heads, tgt_len, src_len]  这就num_heads个QK相乘后的注意力矩阵
@@ -396,10 +399,10 @@ def multi_head_attention_forward(query,  # [tgt_len,batch_size, embed_dim]
         attn_output_weights = attn_output_weights.masked_fill(
             key_padding_mask.unsqueeze(1).unsqueeze(2),
             float('-inf'))  #
-        # 扩展维度，key_padding_mask从[batch_size,src_len]变成[batch_size,1,1,src_len]
-        # 然后再对attn_output_weights进行填充
-        attn_output_weights = attn_output_weights.view(bsz * num_heads, tgt_len,
-                                                       src_len)  # [batch_size * num_heads, tgt_len, src_len]
+        # 扩展维度，key_padding_mask 从 [batch_size,src_len] 变成 [batch_size, 1, 1, src_len]
+        # 然后再对 attn_output_weights 进行填充
+        attn_output_weights = attn_output_weights.view(bsz * num_heads, tgt_len, src_len)
+        # [batch_size * num_heads, tgt_len, src_len]
 
     attn_output_weights = F.softmax(attn_output_weights, dim=-1)  # [batch_size * num_heads, tgt_len, src_len]
     attn_output_weights = F.dropout(attn_output_weights, p=dropout_p, training=training)
@@ -408,16 +411,20 @@ def multi_head_attention_forward(query,  # [tgt_len,batch_size, embed_dim]
     # = # [batch_size * num_heads,tgt_len,vdim]
     # 这就num_heads个Attention(Q,K,V)结果
 
+
     attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
     # 先transpose成 [tgt_len, batch_size* num_heads ,kdim]
     # 再view成 [tgt_len,batch_size,num_heads*kdim]
     attn_output_weights = attn_output_weights.view(bsz, num_heads, tgt_len, src_len)
 
     Z = out_proj(attn_output)
-    # 这里就是多个z  线性组合成Z  [tgt_len,batch_size,embed_dim]
+    # 这里就是多个z  线性组合成Z  [tgt_len, batch_size, embed_dim]
     if is_print_shape:
         print(f"\t 多头注意力中,多头计算结束后的形状（堆叠）为([tgt_len,batch_size,num_heads*kdim]){attn_output.shape}")
         print(
             f"\t 多头计算结束后，再进行线性变换时的权重W_o的形状为([num_heads*vdim, num_heads*vdim  ]){out_proj.weight.shape}")
         print(f"\t 多头线性变化后的形状为([tgt_len,batch_size,embed_dim]) {Z.shape}")
     return Z, attn_output_weights.sum(dim=1) / num_heads  # average attention weights over heads
+
+
+#
