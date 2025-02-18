@@ -74,6 +74,11 @@ class MyTransformer(nn.Module):
         """
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
         # torch.triu(torch.ones(sz, sz)) 上三角矩阵，转置变成下三角
+        # torch.triu(torch.ones(4, 4)).transpose(0, 1)
+        # tensor([[1., 0., 0., 0.],
+        #         [1., 1., 0., 0.],
+        #         [1., 1., 1., 0.],
+        #         [1., 1., 1., 1.]])
         mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
         # 将 0 的部分 替换为 -inf， 1 的部分替换为 0
         return mask  # [sz,sz]
