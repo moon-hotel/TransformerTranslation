@@ -20,8 +20,8 @@ class PositionalEncoding(nn.Module):
         :param x: [x_len, batch_size, emb_size]
         :return: [x_len, batch_size, emb_size]
         """
-        x = x + self.pe[:x.size(0), :]  # [src_len,batch_size, d_model] + [src_len, 1, d_model]
-        return self.dropout(x)  # [src_len,batch_size, d_model]
+        x = x + self.pe[:x.size(0), :]  # [x_len,batch_size, d_model] + [x_len, 1, d_model]
+        return self.dropout(x)  # [x_len,batch_size, d_model]
 
 
 class TokenEmbedding(nn.Module):
@@ -30,10 +30,9 @@ class TokenEmbedding(nn.Module):
         self.embedding = nn.Embedding(vocab_size, emb_size)
         self.emb_size = emb_size
 
-    """
-        :param tokens: shape : [len, batch_size]
-        :return: shape: [len, batch_size, emb_size]
-        """
-
     def forward(self, tokens):
+        """
+            :param tokens: shape : [seq_len, batch_size]
+            :return: shape: [seq_len, batch_size, emb_size]
+        """
         return self.embedding(tokens) * math.sqrt(self.emb_size)
